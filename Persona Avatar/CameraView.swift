@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RealityKit
 import Combine
 import AVFoundation
 import CoreImage
@@ -94,11 +95,6 @@ final class CameraModel: NSObject, ObservableObject {
         sessionQueue.async {
             self.session.beginConfiguration()
             defer { self.session.commitConfiguration() }
-
-            // Preset
-#if !os(visionOS)
-            self.session.sessionPreset = .high
-#endif
 
             // Remove existing inputs/outputs
             for input in self.session.inputs { self.session.removeInput(input) }
