@@ -5,6 +5,8 @@
 //  Created by dev on 10/27/25.
 //
 
+// NOTE: Currently unused. Consider removing this file if not referenced by any build phase.
+
 // File for Metal kernel and shader functions
 
 #include <metal_stdlib>
@@ -52,3 +54,4 @@ fragment float4 fragmentShader(ColorInOut in [[stage_in]],
 
     return float4(colorSample);
 }
+

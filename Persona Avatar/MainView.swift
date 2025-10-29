@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import AVKit
 
 
 struct MainView: View {
@@ -17,7 +18,7 @@ struct MainView: View {
     var body: some View {
         // Display a line of text and
         // open a new immersive space environment.
-        CameraView()
+        StatusHudView()
         .onAppear {
             Task {
                 await openImmersiveSpace(id: "ImmersiveHUD")

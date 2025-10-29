@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import RealityKit
 import Combine
 import AVFoundation
 import CoreImage

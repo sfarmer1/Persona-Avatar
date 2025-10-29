@@ -12,8 +12,9 @@ struct ImmersiveHUDView: View {
             // Container entity for the HUD content
             let hud = ViewAttachmentEntity(
                 components: ViewAttachmentComponent(
-                rootView: DebugAnchorView()
-                .cameraAnchor(isActive: true)))
+                    rootView: CameraView()
+                )
+            )
             hud.position = [0, -0.05, -0.85]
             hud.components.set(BillboardComponent())
 
@@ -22,16 +23,5 @@ struct ImmersiveHUDView: View {
         }
         // In immersive spaces, you often want to hide hands/arms near HUDs; adjust as needed
         .upperLimbVisibility(.hidden)
-    }
-}
-
-struct DebugAnchorView: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Status").font(.headline)
-            Text("All green ✅").font(.subheadline)
-        }
-        .padding(14)
-        .glassBackgroundEffect()
     }
 }

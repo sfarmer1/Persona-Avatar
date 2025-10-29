@@ -1,9 +1,19 @@
+//
+//  StatusHudView.swift
+//  Persona Avatar
+//
+//  Created by dev on 10/28/25.
+//
 
-    private var statusHUD: some View {
-        VStack(spacing: 8) {
-            Text("Status").font(.headline)
-            Text("All green ✅").font(.subheadline)
+import SwiftUI
+
+    struct StatusHudView: View {
+        var body: some View {
+            VStack(spacing: 8) {
+                Text("Status").font(.headline)
+                Text("All green ✅").font(.subheadline)
+            }
+            .padding(14)
+            .glassBackgroundEffect()
         }
-        .padding(14)
-        .glassBackgroundEffect()
     }
