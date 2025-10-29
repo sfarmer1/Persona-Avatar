@@ -49,16 +49,9 @@ struct CameraView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .task { await model.prepare() }
-        .onChange(of: scenePhase) { _, newPhase in
-            switch newPhase {
-            case .active:
-                model.start()
-            case .inactive, .background:
-                model.stop()
-            @unknown default:
-                break
-            }
+        .task {
+            await model.prepare()
+            model.start()
         }
     }
 }
