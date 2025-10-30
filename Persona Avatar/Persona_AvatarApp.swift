@@ -33,7 +33,6 @@ struct CameraLauncherView: View {
                 // Defer to the next runloop to ensure the first window is ready
                 DispatchQueue.main.async {
                     openWindow(id: "camera.window.2")
-                    openWindow(id: "camera.window.3")
                 }
             }
     }
@@ -55,6 +54,26 @@ struct CameraAnchorWindowView: View {
     }
 }
 
+struct DebugFocusView: View {
+    @StateObject private var coordinator = FocusCoordinator.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Focus Debug")
+                .font(.headline)
+            HStack {
+                Text("currentWindowID:")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(coordinator.currentWindowID ?? "nil")
+                    .font(.system(.body, design: .monospaced))
+            }
+        }
+        .padding()
+        .frame(minWidth: 260, alignment: .leading)
+    }
+}
+
 @main
 struct Persona_AvatarApp: App {
     var body: some Scene {
@@ -64,9 +83,6 @@ struct Persona_AvatarApp: App {
         }
         Window("Camera 2", id: "camera.window.2") {
             CameraAnchorWindowView(windowID: "camera.window.2")
-        }
-        Window("Camera 3", id: "camera.window.3") {
-            CameraAnchorWindowView(windowID: "camera.window.3")
         }
     }
 }
