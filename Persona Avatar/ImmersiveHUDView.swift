@@ -12,6 +12,7 @@ final class HUDUpdateSystem: System {
     private let worldTrackingProvider = WorldTrackingProvider()
     private var coordinator = FocusCoordinator.shared
     private var lastBucket: Int? = nil
+    private var tickCount: Int = 0
     
     required init(scene: RealityKit.Scene) {
         // Start ARKit Session
@@ -23,6 +24,40 @@ final class HUDUpdateSystem: System {
             }
         }
     }
+    
+    func printEntityAndAlterCam(_ e: Entity, _ depth: Int, _ deviceTransformMat: simd_float4x4) {
+        var s = ""
+        for _ in 0..<depth {
+            s += "  "
+        }
+        if depth == 0 {
+            //print(e.components)
+        }
+        //print(s, "`" + e.name + "' id:", e.id, type(of: e), e.position, e.scale)
+        for c in e.children {
+            printEntityAndAlterCam(c, depth + 1, deviceTransformMat)
+        }
+        
+        if e.name.starts(with: "SpatialProxy:virtualCamera") {
+            let p = e.parent!.parent!.parent!.parent!.parent!
+            
+            var pos = deviceTransformMat.columns.3
+            pos -= deviceTransformMat.columns.2 * 1.0
+            p.position = simd_float3(pos.x, pos.y, pos.z)
+            p.orientation = simd_quatf(deviceTransformMat)
+            e.isEnabled = coordinator.cameraFlipper
+        }
+    }
+
+    static func currentKeyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes
+            .filter({ $0.activationState == .foregroundActive })
+            .map({ $0 as? UIWindowScene })
+            .compactMap({ $0 })
+            .first?.windows
+            .filter({ $0.isKeyWindow })
+            .first
+    }
 
     func update(context: SceneUpdateContext) {
 //        guard let hud = context.scene.performQuery(HUDUpdateSystem.hudQuery).first(where: { _ in true }) else { return }
@@ -30,34 +65,63 @@ final class HUDUpdateSystem: System {
         // Check whether the world-tracking provider is running.
         guard worldTrackingProvider.state == .running else { return }
         
+        tickCount += 1
+        if tickCount % 2 != 0 {
+            coordinator.cameraFlipper = !coordinator.cameraFlipper
+        }
+        
         // Query the device anchor at the current time.
         guard let deviceAnchor = worldTrackingProvider.queryDeviceAnchor(atTimestamp: CACurrentMediaTime()) else { return }
         
         // Find the transform of the device.
-        let deviceTransform = Transform(matrix: deviceAnchor.originFromAnchorTransform)
+        let deviceTransformMat = deviceAnchor.originFromAnchorTransform
+        let deviceTransform = Transform(matrix: deviceTransformMat)
         
-
-        // Compute head yaw (rotation about world up) from the head's quaternion
-        let q = deviceTransform.rotation
-        // Yaw from quaternion (assuming right-handed, y-up): yaw = atan2(2*(w*y + x*z), 1 - 2*(y*y + z*z))
-        let siny_cosp = 2 * (q.real * q.imag.y + q.imag.x * q.imag.z)
-        let cosy_cosp = 1 - 2 * (q.imag.y * q.imag.y + q.imag.z * q.imag.z)
-        let yawRadians = atan2(siny_cosp, cosy_cosp)
-        var yawDegrees = yawRadians * 180 / .pi
-        // Normalize to [0, 360)
-        yawDegrees -= 15
-        yawDegrees.formTruncatingRemainder(dividingBy: 360)
-        if yawDegrees < 0 { yawDegrees += 360 }
-        
-        // Determine 30° bucket and alternate color by bucket parity
-        let bucket = Int(yawDegrees / 30) // 0..11
-        
-        
-        if lastBucket != bucket {
-            Task { @MainActor in
-                coordinator.currentWindowID = "anchor.\(bucket)"
+        //print(HUDUpdateSystem.currentKeyWindow())
+        /*if let window = HUDUpdateSystem.currentKeyWindow() {
+            for w in window.windowScene!.windows {
+                //w.transform3D.m13 = CGFloat(sin(Float(CACurrentMediaTime())))
+                //w.frame = CGRect(x: w.frame.origin.x, y: w.frame.origin.y, width: w.frame.width, height: w.frame.height)
+                if (w.description.contains("ViewHosting")) {
+                    print(w)
+                    w.makeKey()
+                }
             }
-            lastBucket = bucket
+        }*/
+
+        let query = EntityQuery()
+        var roots = [Entity]()
+        context.scene.performQuery(query).forEach { entity in
+            var e = entity
+            var lastId = e.id
+            while true {
+                if e.parent == nil {
+                    break
+                }
+                e = e.parent!
+                if e.id == lastId {
+                    break
+                }
+                lastId = e.id
+                
+                if e.name.contains("Window Context Entity") {
+                    var contains = false
+                    for r in roots {
+                        if r.id == e.id {
+                            contains = true
+                            break
+                        }
+                    }
+                    if !contains {
+                        roots.append(e)
+                    }
+                }
+            }
+        }
+        
+        //print("Entity tree for scene:")
+        for e in roots {
+            printEntityAndAlterCam(e, 0, deviceTransformMat)
         }
     }
 }
@@ -122,6 +186,9 @@ struct ImmersiveHUDView: View {
         }
         // In immersive spaces, you often want to hide hands/arms near HUDs; adjust as needed
         .upperLimbVisibility(.hidden)
+        
+        CameraView()
+        .cameraAnchor(isActive: true)
     }
 }
 
