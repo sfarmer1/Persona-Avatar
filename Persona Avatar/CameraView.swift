@@ -12,7 +12,6 @@ import CoreImage
 import Vision
 
 struct CameraView: View {
-    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var model = CameraModel()
 
     var body: some View {
@@ -26,7 +25,7 @@ struct CameraView: View {
                             .scaledToFill()
                             .ignoresSafeArea()
 
-                        // Overlay detected faces and a few landmark points
+                        // Overlay detected faces
                         if let image = model.currentFrameImage {
                             FaceOverlayView(faces: model.detectedFaces, imageSize: CGSize(width: image.width, height: image.height))
                                 .ignoresSafeArea()
@@ -190,7 +189,7 @@ final class CameraModel: NSObject, ObservableObject {
     @Published var blendShapes: [String: Float] = [:]
 
     nonisolated private let sequenceRequestHandler = VNSequenceRequestHandler()
-    nonisolated private lazy var faceLandmarksRequest: VNDetectFaceLandmarksRequest = {
+    private lazy var faceLandmarksRequest: VNDetectFaceLandmarksRequest = {
         let req = VNDetectFaceLandmarksRequest(completionHandler: self.handleFaceLandmarks)
         return req
     }()
@@ -546,7 +545,7 @@ final class CameraModel: NSObject, ObservableObject {
     }
 }
 
-nonisolated extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate {
+extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
@@ -565,7 +564,5 @@ nonisolated extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate 
                 self.currentFrameImage = cgImage
             }
         }
-
-        // The completion handler will update detectedFaces on main actor
     }
 }
